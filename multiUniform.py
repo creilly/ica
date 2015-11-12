@@ -22,12 +22,12 @@ x = [
 
 
 BINS = 30
-plt.hist(s[0],BINS,label='source 1')
-plt.hist(s[1],BINS,label='source 2')
-plt.hist(x[0],BINS,label='sum')
-plt.hist(x[1],BINS,label='difference')
-plt.legend()
-plt.show()
+# plt.hist(s[0],BINS,label='source 1')
+# plt.hist(s[1],BINS,label='source 2')
+# plt.hist(x[0],BINS,label='sum')
+# plt.hist(x[1],BINS,label='difference')
+# plt.legend()
+# plt.show()
 
 #Normalize the two signal in order for preprocessing to make seperation easier
 for i in range(len(x)):
@@ -73,8 +73,10 @@ print '\n'.join(
     ) for row in covariance(xBar)
 )
 
-def F(x):                                   #F(x) is just the g1(u) on pdf eq 39
+def F(x):                                   #F(x) is just the g2(u) on pdf eq 39
     return x * np.exp(-1. * np.square(x) / 2.)
+
+#derivative of g(u)
 def f(x):
     return (1. - np.square(x)) * np.exp(-1. * np.square(x) / 2.)
 
@@ -83,6 +85,7 @@ def compute_w_plus(signals,w):
     c, d = w
     w_plus = [0.,0.]
     x = signals.transpose()
+
     for a,b in x:
         w_plus[0] += 1. / len(x) * (
             a * F(c*a + d*b) - f(c*a + d*b) * c
@@ -95,28 +98,66 @@ def compute_w_plus(signals,w):
     return w_plus
 
 theta = ran.uniform(0.,2. * np.pi)
-w = np.array([np.cos(theta),np.sin(theta)])
-guesses = []
-guesses.append(list(w))
+gamma = ran.uniform(0.,2. * np.pi)
+wOne = np.array([np.cos(theta),np.sin(theta)])
+wTwo = np.array([np.cos(gamma),np.sin(gamma)])
+guessesOne = []
+guessesOne.append(list(wOne))
+guessesTwo = []
+guessesTwo.append(list(wTwo))
+
+print "This is one"
 while True:
-    print w
-    w_plus = compute_w_plus(xBar,w)
-    guesses.append(list(w_plus))
-    if np.abs(np.dot(w.transpose(),w_plus) - 1.) < 1.e-100:
+    
+    print wOne
+    w_plusOne = compute_w_plus(xBar,wOne)
+
+
+    guessesOne.append(list(w_plusOne))
+
+    if np.abs(np.dot(wOne.transpose(),w_plusOne) - 1.) < 1.e-100:
         break
-    w = w_plus
-plt.plot(*zip(*guesses))
+    wOne = w_plusOne
+
+print "this is two"
+while True:
+    
+    print wTwo
+    w_plusTwo = compute_w_plus(xBar,wTwo)
+
+
+    guessesTwo.append(list(w_plusTwo))
+
+    if np.abs(np.dot(wTwo.transpose(),w_plusTwo) - 1.) < 1.e-100:
+        break
+    wTwo = w_plusTwo
+
+
+plt.plot(*zip(*guessesOne),label='Guess 1')
+plt.plot(*zip(*guessesTwo),label='Guess 2')
 plt.show()
 
-demixed = []
+demixedOne = []
+demixedTwo = []
 for a, b in x.transpose():
-    c, d = w_plus
-    demixed.append(a*c + b*d)
-plt.hist(demixed,BINS)
+    c, d = w_plusOne
+    e, f = w_plusTwo
+
+    demixedOne.append(a*c + b*d)
+    demixedTwo.append(a*e + b*f)
+
+plt.hist(demixedOne,BINS, label='Guess 1')
+plt.hist(demixedTwo,BINS, label='Guess 2')
+plt.legend()
 plt.show()
-plt.plot(s[0][:100])
-plt.plot(demixed[:100])
+
+plt.plot(s[0][:100], label="Signal 1")
+plt.plot(demixedOne[:100],label='Guess 1')
+plt.plot(demixedTwo[:100],label='Guess 2')
+plt.legend()
 plt.show()
-plt.plot(s[1][:100])
-plt.plot(demixed[:100])
+plt.plot(s[1][:100],label='Signal 2')
+plt.plot(demixedOne[:100],label='Guess 1')
+plt.plot(demixedTwo[:100], label='Guess 2')
+plt.legend()
 plt.show()
