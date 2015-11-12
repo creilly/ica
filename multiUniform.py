@@ -106,30 +106,29 @@ guessesOne.append(list(wOne))
 guessesTwo = []
 guessesTwo.append(list(wTwo))
 
-print "This is one"
+#Iteration should first find first then second source
+#Then from second subtract projection of first W2 = W2 - W2^T*W1*W1
+#Next W2= W2/sqrt(W2^T * W2)
+
 while True:
     
+    print "this is one"
     print wOne
-    w_plusOne = compute_w_plus(xBar,wOne)
+    print "this is two"
+    print wTwo
 
+    w_plusOne = compute_w_plus(xBar,wOne)
+    w_plusTwo = compute_w_plus(xBar,wTwo)
+
+    #w_plusTwo = w_plusTwo - w_plusTwo.transpose() * np.square(w_plusOne)
+    #w_plusTwo = w_plusTwo / np.sqrt(w_plusTwo.transpose() * w_plusTwo)
 
     guessesOne.append(list(w_plusOne))
+    guessesTwo.append(list(w_plusTwo))
 
     if np.abs(np.dot(wOne.transpose(),w_plusOne) - 1.) < 1.e-100:
         break
     wOne = w_plusOne
-
-print "this is two"
-while True:
-    
-    print wTwo
-    w_plusTwo = compute_w_plus(xBar,wTwo)
-
-
-    guessesTwo.append(list(w_plusTwo))
-
-    if np.abs(np.dot(wTwo.transpose(),w_plusTwo) - 1.) < 1.e-100:
-        break
     wTwo = w_plusTwo
 
 
