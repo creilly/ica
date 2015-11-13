@@ -1,15 +1,15 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
-dimensions = 5
+dimensions = 3
 samples = 10000
-delta = 1.e-5
+delta = 1.e-3
 
 np.random.seed()
 
 endpoints = np.random.uniform(.1,20.0,dimensions)
 sources = [
-    np.random.uniform(-1. * endpoint,1. * endpoint,samples) for endpoint in endpoints
+    np.random.exponential(1. * endpoint,samples) for endpoint in endpoints
 ]
 
 sources = np.vstack(sources)
@@ -88,19 +88,20 @@ for signal_index, signal in enumerate(signals):
                     ]
             )
         )
-        corr = cov[1][0]/np.sqrt(cov[1][1]*cov[0][0])
+        corr = np.abs(cov[1][0]/np.sqrt(cov[1][1]*cov[0][0]))
         print signal_index, extracted_signal_index, corr
         image_row.append(corr)
-    # max_index = image_row.index(max(image_row))
-    # plt.plot(signal[:50]/np.std(signal))
-    # plt.plot(extracted_signals[max_index][:50])
-    # plt.show()
+    max_index = image_row.index(max(image_row))
+    plt.plot(signal[:50]/np.std(signal))
+    plt.plot(extracted_signals[max_index][:50])
+    plt.show()
     image.append(image_row)
 plt.pcolor(np.array(image).transpose())
 signal_strengths = np.square(mixing_matrix).sum(1)*endpoints
-plt.plot(np.arange(dimensions)+.5,signal_strengths/signal_strengths.max()*dimensions,'bo',label='signal strength')
+plt.plot(np.arange(dimensions)+.5,signal_strengths/signal_strengths.max()*dimensions,'wo',label='signal strength')
 plt.legend()
 plt.xlabel('source signal')
 plt.ylabel('extracted signal')
 plt.title('correlation coefficients')
+plt.colorbar()
 plt.show()
