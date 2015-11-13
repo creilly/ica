@@ -1,7 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
-dimensions = 10
+dimensions = 5
 samples = 10000
 delta = 1.e-5
 
@@ -96,7 +96,9 @@ for signal_index, signal in enumerate(signals):
     plt.plot(extracted_signals[max_index][:50])
     plt.show()
     image.append(image_row)
-plt.pcolor(np.array(image))
-plt.plot(np.arange(dimensions)+.5,endpoints*dimensions,'bo')
+plt.pcolor(np.array(image).transpose())
+signal_strengths = np.square(mixing_matrix).sum(1)*endpoints
+plt.plot(np.arange(dimensions)+.5,signal_strengths/signal_strengths.max()*dimensions,'bo',label='signal strength')
+plt.legend()
 plt.show()
 
