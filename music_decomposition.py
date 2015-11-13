@@ -1,10 +1,39 @@
 import numpy as np
 from matplotlib import pyplot as plt
 import sys
+import wave
+import struct
+from scipy.io import wavfile
+import os
 
-dimensions = 4
-samples = 1000000
-delta = 1.e-2
+samples = 190000
+delta = 1.e-6
+
+wave_files = [
+    'africa.wav',
+    'dont-speak.wav',
+    'mambo-no-5.wav',
+    'i-ran-so-far-away.wav'
+]
+sources = []
+for index, wave_file in enumerate(wave_files):
+    wave_read = wave.Wave_read(wave_file)
+    data = np.array(
+        [
+            float(
+                struct.unpack(
+                    '<h',
+                    wave_read.readframes(1)
+                )[0]
+            ) for frame in range(samples)
+        ]
+    )
+    data = data * {
+        0:3.,
+    }.get(index,1.)
+    sources.append(data) 
+
+dimensions = len(wave_files)
 
 HIST = False
 if '--hist' in sys.argv:
@@ -18,23 +47,43 @@ STRENGTH = False
 if '--strength' in sys.argv:
     STRENGTH = True
 
+PLAY = False
+if '--play' in sys.argv:
+    PLAY = True
+
 np.random.seed()
 
-lifetimes = np.random.uniform(.1,20.0,dimensions)
-sources = [
-    np.random.exponential(lifetime,samples) for lifetime in lifetimes
-]
+# lifetimes = np.random.uniform(.1,20.0,dimensions)
+# sources = [
+#     np.random.exponential(lifetime,samples) for lifetime in lifetimes
+# ]
+
 if HIST:
     for source in sources:
         plt.hist(source,50)
         plt.title('source hist')
         plt.show()
 
-sources = np.vstack(sources)
+# sources = np.vstack(sources)
+sources = np.array(sources)
 
 mixing_matrix = np.random.uniform(1.,5.,(dimensions,dimensions))
 
 signals = np.dot(mixing_matrix,sources)
+for index, signal in enumerate(signals):
+    fname = 'mixed_%d.wav' % (index+1)
+    signal = signal - signal.min()
+    signal = (signal / signal.max() * 2**16 - 2**15).astype('i2')
+    wave_write = wave.Wave_write(fname)
+    wave_write.setsampwidth(2)
+    wave_write.setframerate(wave_read.getframerate())
+    wave_write.setnchannels(1)
+    for sample in signal:
+        wave_write.writeframes(
+            struct.pack('h',sample)
+        )
+    if PLAY:
+        os.system('aplay %s' % fname)
 
 if HIST:
     for signal in signals:
@@ -104,6 +153,22 @@ if HIST:
     for extracted_signal in extracted_signals:
         plt.hist(extracted_signal,50)
         plt.show()
+
+for index, signal in enumerate(extracted_signals):
+    fname = 'extracted_%d.wav' % (index+1)
+    signal = signal - signal.min()
+    signal = (signal / signal.max() * 2**16 - 2**15).astype('i2')
+    wave_write = wave.Wave_write(fname)
+    wave_write.setsampwidth(2)
+    wave_write.setframerate(wave_read.getframerate())
+    wave_write.setnchannels(1)
+    for sample in signal:
+        wave_write.writeframes(
+            struct.pack('h',sample)
+        )
+    if PLAY:
+        os.system('aplay %s' % fname)
+
 image = []
 for source_index, source in enumerate(sources):    
     image_row = []
