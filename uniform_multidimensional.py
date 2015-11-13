@@ -91,14 +91,16 @@ for signal_index, signal in enumerate(signals):
         corr = cov[1][0]/np.sqrt(cov[1][1]*cov[0][0])
         print signal_index, extracted_signal_index, corr
         image_row.append(corr)
-    max_index = image_row.index(max(image_row))
-    plt.plot(signal[:50]/np.std(signal))
-    plt.plot(extracted_signals[max_index][:50])
-    plt.show()
+    # max_index = image_row.index(max(image_row))
+    # plt.plot(signal[:50]/np.std(signal))
+    # plt.plot(extracted_signals[max_index][:50])
+    # plt.show()
     image.append(image_row)
 plt.pcolor(np.array(image).transpose())
 signal_strengths = np.square(mixing_matrix).sum(1)*endpoints
 plt.plot(np.arange(dimensions)+.5,signal_strengths/signal_strengths.max()*dimensions,'bo',label='signal strength')
 plt.legend()
+plt.xlabel('source signal')
+plt.ylabel('extracted signal')
+plt.title('correlation coefficients')
 plt.show()
-
