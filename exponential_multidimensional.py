@@ -1,22 +1,42 @@
 import numpy as np
 from matplotlib import pyplot as plt
+import sys
 
-dimensions = 3
+HIST = False
+if '--hist' in sys.argv:
+    HIST = True
+
+PLOT = False
+if '--plot' in sys.argv:
+    PLOT = True
+
+dimensions = 5
 samples = 10000
-delta = 1.e-3
+delta = 1.e-8
 
 np.random.seed()
 
-endpoints = np.random.uniform(.1,20.0,dimensions)
+lifetimes = np.random.uniform(.1,20.0,dimensions)
 sources = [
-    np.random.exponential(1. * endpoint,samples) for endpoint in endpoints
+    np.random.exponential(lifetime,samples) for lifetime in lifetimes
 ]
+if HIST:
+    for source in sources:
+        plt.hist(source,50)
+        plt.title('source hist')
+        plt.show()
 
 sources = np.vstack(sources)
 
 mixing_matrix = np.random.uniform(1.,5.,(dimensions,dimensions))
 
 signals = np.dot(mixing_matrix,sources)
+
+if HIST:
+    for signal in signals:
+        plt.hist(signal,50)
+        plt.title('mixed signal hist')
+        plt.show()
 
 centered = signals - np.average(signals,1).reshape(dimensions,1)
 
@@ -76,29 +96,33 @@ for dimension in range(dimensions):
 
 extracted_signals = np.vstack(components).dot(whitened)
 
+if HIST:
+    for extracted_signal in extracted_signals:
+        plt.hist(extracted_signal,50)
+        plt.show()
 image = []
-for signal_index, signal in enumerate(signals):    
+for source_index, source in enumerate(sources):    
     image_row = []
     for extracted_signal_index, extracted_signal in enumerate(extracted_signals):
         cov = np.cov(
             np.vstack(
                 [
-                    signal,
+                    source,
                     extracted_signal
-                    ]
+                ]
             )
         )
         corr = np.abs(cov[1][0]/np.sqrt(cov[1][1]*cov[0][0]))
-        print signal_index, extracted_signal_index, corr
+        print source_index, extracted_signal_index, corr
         image_row.append(corr)
-    max_index = image_row.index(max(image_row))
-    plt.plot(signal[:50]/np.std(signal))
-    plt.plot(extracted_signals[max_index][:50])
-    plt.show()
+    if PLOT:
+        max_index = image_row.index(max(image_row))
+        plt.plot(source[:50]/np.std(source))
+        plt.plot(extracted_signals[max_index][:50])
+        plt.show()
     image.append(image_row)
 plt.pcolor(np.array(image).transpose())
-signal_strengths = np.square(mixing_matrix).sum(1)*endpoints
-plt.plot(np.arange(dimensions)+.5,signal_strengths/signal_strengths.max()*dimensions,'wo',label='signal strength')
+plt.plot(np.arange(dimensions)+.5,lifetimes/lifetimes.max()*dimensions,'wo',label='source strength')
 plt.legend()
 plt.xlabel('source signal')
 plt.ylabel('extracted signal')
