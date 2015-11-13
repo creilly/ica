@@ -1,14 +1,13 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
-dimensions = 3
-samples = 50
-delta = 1.e-12
+dimensions = 10
+samples = 10000
+delta = 1.e-5
 
 np.random.seed()
 
-endpoints = np.random.uniform(.1,1.0,dimensions)
-
+endpoints = np.random.uniform(.1,20.0,dimensions)
 sources = [
     np.random.uniform(-1. * endpoint,1. * endpoint,samples) for endpoint in endpoints
 ]
@@ -77,7 +76,9 @@ for dimension in range(dimensions):
 
 extracted_signals = np.vstack(components).dot(whitened)
 
+image = []
 for signal_index, signal in enumerate(signals):    
+    image_row = []
     for extracted_signal_index, extracted_signal in enumerate(extracted_signals):
         cov = np.cov(
             np.vstack(
@@ -87,6 +88,15 @@ for signal_index, signal in enumerate(signals):
                     ]
             )
         )
-        print signal_index, extracted_signal_index, cov[1][0]/np.sqrt(cov[1][1]*cov[0][0])
-
+        corr = cov[1][0]/np.sqrt(cov[1][1]*cov[0][0])
+        print signal_index, extracted_signal_index, corr
+        image_row.append(corr)
+    max_index = image_row.index(max(image_row))
+    plt.plot(signal[:50]/np.std(signal))
+    plt.plot(extracted_signals[max_index][:50])
+    plt.show()
+    image.append(image_row)
+plt.pcolor(np.array(image))
+plt.plot(np.arange(dimensions)+.5,endpoints*dimensions,'bo')
+plt.show()
 
