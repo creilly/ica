@@ -10,6 +10,21 @@ delta = 1.e-4 # criterion for convergence
 bins = 500 # number of bins in histgrams
 sound_program = 'start' # program that plays wav files (change this for your os)
 
+# command line argument to show histograms of the source, signal, and extracted data (shows 3*dimensions number of plots)
+HIST = False
+if '--hist' in sys.argv:
+    HIST = True
+
+# command line argument to show how similar the extracted waveforms are to source waveforms (shows dimensions number of plots)
+PLOT = False
+if '--plot' in sys.argv:
+    PLOT = True
+
+# plays the files as they are generated (uses command specified in sound_program variable)
+PLAY = False
+if '--play' in sys.argv:
+    PLAY = True
+
 # these files should be in the local folder
 wave_files = [
     'africa.wav',
@@ -40,21 +55,6 @@ for wave_file in wave_files:
     sources.append(data) 
 
 dimensions = len(wave_files)
-
-# command line argument to show histograms of the source, signal, and extracted data (shows 3*dimensions number of plots)
-HIST = False
-if '--hist' in sys.argv:
-    HIST = True
-
-# command line argument to show how similar the extracted waveforms are to source waveforms (shows dimensions number of plots)
-PLOT = False
-if '--plot' in sys.argv:
-    PLOT = True
-
-# plays the files as they are generated (uses aplay command, maybe mac has this?)
-PLAY = False
-if '--play' in sys.argv:
-    PLAY = True
 
 np.random.seed()
 
