@@ -5,9 +5,10 @@ import wave
 import struct
 import os
 
-samples = 190000 # how many music samples per track to analyze (max 200000)
-delta = 1.e-10 # criterion for convergence
-bins = 500
+samples = 195000 # how many music samples per track to analyze (max 200000)
+delta = 1.e-4 # criterion for convergence
+bins = 500 # number of bins in histgrams
+sound_program = 'start' # program that plays wav files (change this for your os)
 
 # these files should be in the local folder
 wave_files = [
@@ -98,10 +99,14 @@ for index, signal in enumerate(signals):
         wave_write.writeframes(
             struct.pack('h',sample)
         )
-
+    wave_write.close()
     if PLAY:
-        # only works if system has aplay program
-        os.system('aplay %s' % fname)
+        # issue terminal command to play song
+        os.system(
+            '%s %s' % (
+                sound_program,fname
+            )
+        )
 
 if HIST:
     # plot mixed signal histograms
@@ -218,8 +223,13 @@ for index, signal in enumerate(extracted_signals):
         wave_write.writeframes(
             struct.pack('h',sample)
         )
+    wave_write.close()        
     if PLAY:
-        os.system('aplay %s' % fname)
+        os.system(
+            '%s %s' % (
+                sound_program,fname
+            )
+        )
 
 # construct matrix of source / extracted correlation coefficients
 image = []
