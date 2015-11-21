@@ -159,7 +159,8 @@ for dimension in range(dimensions):
 
     # normalize
     old_guess = old_guess / np.linalg.norm(old_guess)
-    
+
+    old_guess = old_guess/ np.sqrt(np.linalg.norm(old_guess*old_guess.transpose()))
     # keep track of number of iterations it takes to converge
     iterations = 0
     while True:
@@ -178,11 +179,11 @@ for dimension in range(dimensions):
         ) * old_guess
 
         # Perform normalization
-        new_guess = new_guess / np.sqrt(
-            np.linalg.norm(new_guess.dot(
-                new_guess.transpose())
-                )
-            )
+        # new_guess = new_guess / np.sqrt(
+        #     np.linalg.norm(new_guess.dot(
+        #         new_guess.transpose())
+        #         )
+        #     )
 
         # perform same projection / normalization as we did with first guess
         new_guess = 3/2 * new_guess - 1/2 *new_guess*(
