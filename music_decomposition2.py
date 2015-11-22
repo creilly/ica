@@ -212,7 +212,7 @@ for dimension in range(dimensions):
 components = np.array(components)
 components = components.transpose()
 components = components/ np.sqrt(
-    np.linalg.norm(components.dot(components.transpose()),ord=2)
+    np.linalg.norm(components*(components.transpose()),ord=2)
     )
     
 
@@ -238,7 +238,7 @@ while True:
     print '%d iterations' % (iterations)
 
 # compute extracted signals by applying extracted weights on whitened signal data
-extracted_signals = np.vstack(components).dot(whitened)
+extracted_signals = np.vstack(components.transpose()).dot(whitened)
 
 if HIST:
     # plot extracted signal histograms
