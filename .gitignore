@@ -88,3 +88,7 @@ tramp
 
 # cask packages
 .cask/
+
+#output files
+extracted*
+mixed*

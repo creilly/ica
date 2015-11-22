@@ -5,7 +5,7 @@ import wave
 import struct
 import os
 
-samples = 195000 # how many music samples per track to analyze (max 200000)
+samples = 195000 # how many music samples per track to analyze (max 200000) current 195000
 delta = 1.e-4 # criterion for convergence
 bins = 500 # number of bins in histgrams
 sound_program = 'start' # program that plays wav files (change this for your os)
@@ -147,65 +147,95 @@ def f(x):
 for dimension in range(dimensions):
     # make an initial guess
     old_guess = np.random.uniform(-1.,1.,dimensions)
-    
-    # project out any component along previously extracted components
-    #removed doesn't do anything -David
-    # old_guess = old_guess - sum( 
-    #     [
-    #         component.transpose().dot(old_guess) * component for component in components
-    #     ],
-    #     np.zeros(dimensions)
-    # )
+
+    new_guess = np.average(
+        whitened * F(
+            old_guess.transpose().dot(whitened)
+        ).reshape(1,samples),
+        1
+    ) - np.average(
+        f(
+            old_guess.transpose().dot(whitened)
+        )            
+    ) * old_guess    
 
     # normalize
-    old_guess = old_guess / np.linalg.norm(old_guess)
+    # new_guess = new_guess / np.linalg.norm(new_guess)
 
-    old_guess = old_guess/ np.sqrt(np.linalg.norm(old_guess*old_guess.transpose()))
+    # old_guess = old_guess/ np.sqrt(np.linalg.norm(old_guess*old_guess.transpose()))
     # keep track of number of iterations it takes to converge
-    iterations = 0
-    while True:
-        iterations += 1
+    # iterations = 0
+    # while True:
+    #     iterations += 1
 
-        # compute improved component from old one
-        new_guess = np.average(
-            whitened * F(
-                old_guess.transpose().dot(whitened)
-            ).reshape(1,samples),
-            1
-        ) - np.average(
-            f(
-                old_guess.transpose().dot(whitened)
-            )            
-        ) * old_guess
+    #     # compute improved component from old one
+    #     # new_guess = np.average(
+    #     #     whitened * F(
+    #     #         old_guess.transpose().dot(whitened)
+    #     #     ).reshape(1,samples),
+    #     #     1
+    #     # ) - np.average(
+    #     #     f(
+    #     #         old_guess.transpose().dot(whitened)
+    #     #     )            
+    #     # ) * old_guess
 
-        # Perform normalization
-        # new_guess = new_guess / np.sqrt(
-        #     np.linalg.norm(new_guess.dot(
-        #         new_guess.transpose())
-        #         )
-        #     )
+    #     # Perform normalization
+    #     # new_guess = new_guess / np.sqrt(
+    #     #     np.linalg.norm(new_guess.dot(
+    #     #         new_guess.transpose())
+    #     #         )
+    #     #     )
 
-        # perform same projection / normalization as we did with first guess
-        new_guess = 3/2 * new_guess - 1/2 *new_guess*(
-            new_guess.transpose()
-            )*(new_guess)
+    #     # perform same projection / normalization as we did with first guess
+    #     # new_guess = 3/2 * new_guess - 1/2 * new_guess.dot(
+    #     #     new_guess.transpose()
+    #     #     )*(new_guess)
         
 
-        # compute difference between new and old guess
-        delta_pos = np.linalg.norm(new_guess - old_guess)
+    #     # compute difference between new and old guess
+    #     delta_pos = np.linalg.norm(new_guess - old_guess)
 
-        # compute difference between new and negative of old guess
-        delta_neg = np.linalg.norm(new_guess + old_guess)
+    #     # compute difference between new and negative of old guess
+    #     delta_neg = np.linalg.norm(new_guess + old_guess)
 
-        # set new guess to be old guess of next loop
-        old_guess = new_guess
+    #     # set new guess to be old guess of next loop
+    #     old_guess = new_guess
 
-        # if old guess is "same" as new guess (i.e. within arbitrary negative sign) then we're done
-        if delta_pos < delta or delta_neg < delta:
-            break        
+    #     # if old guess is "same" as new guess (i.e. within arbitrary negative sign) then we're done
+    #     if delta_pos < delta or delta_neg < delta:
+    #         break        
     # add extracted component to list
-    components.append(old_guess)
-    print 'dimension %d found on %d iterations' % (dimension + 1,iterations)
+    components.append(new_guess)
+    # print 'dimension %d found on %d iterations' % (dimension + 1,iterations)
+
+components = np.array(components)
+components = components.transpose()
+components = components/ np.sqrt(
+    np.linalg.norm(components.dot(components.transpose()),ord=2)
+    )
+    
+
+newComponent = components
+iterations = 0
+while True:
+    iterations += 1
+    newComponent = 3/2 * newComponent - 1/2 * newComponent.dot(
+        newComponent.transpose()
+        )*(newComponent)
+
+    delta_pos = np.linalg.norm(newComponent - components)
+
+    # compute difference between new and negative of old guess
+    delta_neg = np.linalg.norm(newComponent + components)
+
+    # set new guess to be old guess of next loop
+    components = newComponent
+
+    # if old guess is "same" as new guess (i.e. within arbitrary negative sign) then we're done
+    if delta_pos < delta or delta_neg < delta:
+        break      
+    print '%d iterations' % (iterations)
 
 # compute extracted signals by applying extracted weights on whitened signal data
 extracted_signals = np.vstack(components).dot(whitened)

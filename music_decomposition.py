@@ -147,7 +147,7 @@ def f(x):
 for dimension in range(dimensions):
     # make an initial guess
     old_guess = np.random.uniform(-1.,1.,dimensions)
-    
+    print components
     # project out any component along previously extracted components
     old_guess = old_guess - sum( 
         [
