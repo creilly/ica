@@ -144,82 +144,35 @@ def f(x):
     return (1. - np.square(x)) * np.exp(-1. * np.square(x) / 2.)
 
 # there are as many components as there are dimensions
-for dimension in range(dimensions):
-    # make an initial guess
-    old_guess = np.random.uniform(-1.,1.,dimensions)
+while True:
+    for dimension in range(dimensions):
+        # make an initial guess
+        old_guess = np.random.uniform(-1.,1.,dimensions)
 
-    new_guess = np.average(
-        whitened * F(
-            old_guess.transpose().dot(whitened)
-        ).reshape(1,samples),
-        1
-    ) - np.average(
-        f(
-            old_guess.transpose().dot(whitened)
-        )            
-    ) * old_guess    
+        new_guess = np.average(
+            whitened * F(
+                old_guess.transpose().dot(whitened)
+            ).reshape(1,samples),
+            1
+        ) - np.average(
+            f(
+                old_guess.transpose().dot(whitened)
+            )            
+        ) * old_guess    
 
-    # normalize
-    # new_guess = new_guess / np.linalg.norm(new_guess)
+        components.append(new_guess)
 
-    # old_guess = old_guess/ np.sqrt(np.linalg.norm(old_guess*old_guess.transpose()))
-    # keep track of number of iterations it takes to converge
-    # iterations = 0
-    # while True:
-    #     iterations += 1
-
-    #     # compute improved component from old one
-    #     # new_guess = np.average(
-    #     #     whitened * F(
-    #     #         old_guess.transpose().dot(whitened)
-    #     #     ).reshape(1,samples),
-    #     #     1
-    #     # ) - np.average(
-    #     #     f(
-    #     #         old_guess.transpose().dot(whitened)
-    #     #     )            
-    #     # ) * old_guess
-
-    #     # Perform normalization
-    #     # new_guess = new_guess / np.sqrt(
-    #     #     np.linalg.norm(new_guess.dot(
-    #     #         new_guess.transpose())
-    #     #         )
-    #     #     )
-
-    #     # perform same projection / normalization as we did with first guess
-    #     # new_guess = 3/2 * new_guess - 1/2 * new_guess.dot(
-    #     #     new_guess.transpose()
-    #     #     )*(new_guess)
+    print components
+    quit()
+    components = np.array(components)
+    components = components.transpose()
+    components = components/ np.sqrt(
+        np.linalg.norm(components*(components.transpose()),ord=2)
+        )
         
 
-    #     # compute difference between new and old guess
-    #     delta_pos = np.linalg.norm(new_guess - old_guess)
+    newComponent = components
 
-    #     # compute difference between new and negative of old guess
-    #     delta_neg = np.linalg.norm(new_guess + old_guess)
-
-    #     # set new guess to be old guess of next loop
-    #     old_guess = new_guess
-
-    #     # if old guess is "same" as new guess (i.e. within arbitrary negative sign) then we're done
-    #     if delta_pos < delta or delta_neg < delta:
-    #         break        
-    # add extracted component to list
-    components.append(new_guess)
-    # print 'dimension %d found on %d iterations' % (dimension + 1,iterations)
-
-components = np.array(components)
-components = components.transpose()
-components = components/ np.sqrt(
-    np.linalg.norm(components*(components.transpose()),ord=2)
-    )
-    
-
-newComponent = components
-iterations = 0
-while True:
-    iterations += 1
     newComponent = 3/2 * newComponent - 1/2 * newComponent.dot(
         newComponent.transpose()
         )*(newComponent)
