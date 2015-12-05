@@ -5,8 +5,8 @@ import wave
 import struct
 import os
 
-samples = 195000 # how many music samples per track to analyze (max 200000) current 195000
-delta = 1.e-4 # criterion for convergence
+samples = 195 # how many music samples per track to analyze (max 200000) current 195000
+delta = 1.e-4 # criterion for convergence 1e-4
 bins = 500 # number of bins in histgrams
 sound_program = 'start' # program that plays wav files (change this for your os)
 
@@ -133,7 +133,8 @@ D = np.diag(1. / np.sqrt(eigenvalues))
 whitened = E.dot(D).dot(E.transpose()).dot(centered)
 
 # will store extracted components here
-components = []
+components = np.zeros((dimensions,dimensions))
+newComponent = np.zeros((dimensions,dimensions))
 
 # first derivative of nonlinear nongaussianity-maximizing function (gaussian)
 def F(x):
@@ -143,11 +144,26 @@ def F(x):
 def f(x):
     return (1. - np.square(x)) * np.exp(-1. * np.square(x) / 2.)
 
+# Problem here! Need to create individual guesses of dimensions then
+# add to complete components then do ling.eigh
 # there are as many components as there are dimensions
+
+for dimension in range(dimensions):
+   old_guess = np.random.uniform(-1.,1.,dimensions)
+   components[dimension,:] = old_guess
+
+s, u = np.linalg.eigh(np.dot(components, components.T))
+components = np.dot(np.dot(u * (1. / np.sqrt(s)), u.T), components)
+
+components = components/ np.linalg.norm(components)
+
+iterations = 0
+
 while True:
+    iterations+=1
+
     for dimension in range(dimensions):
-        # make an initial guess
-        old_guess = np.random.uniform(-1.,1.,dimensions)
+        old_guess = components[dimension,:]
 
         new_guess = np.average(
             whitened * F(
@@ -158,37 +174,26 @@ while True:
             f(
                 old_guess.transpose().dot(whitened)
             )            
-        ) * old_guess    
+        ) * old_guess
+        newComponent[dimension,:] = new_guess
 
-        components.append(new_guess)
+    s, u = np.linalg.eigh(np.dot(newComponent, newComponent.T))
+    newComponent = np.dot(np.dot(u * (1. / np.sqrt(s)), u.T), newComponent)
+    newComponent = newComponent/ np.linalg.norm(newComponent)
 
-    print components
-    quit()
-    components = np.array(components)
-    components = components.transpose()
-    components = components/ np.sqrt(
-        np.linalg.norm(components*(components.transpose()),ord=2)
-        )
-        
-
-    newComponent = components
-
-    newComponent = 3/2 * newComponent - 1/2 * newComponent.dot(
-        newComponent.transpose()
-        )*(newComponent)
-
+   # compute difference between new and old guess
     delta_pos = np.linalg.norm(newComponent - components)
 
     # compute difference between new and negative of old guess
     delta_neg = np.linalg.norm(newComponent + components)
-
+    print newComponent, "\n", components
     # set new guess to be old guess of next loop
     components = newComponent
 
     # if old guess is "same" as new guess (i.e. within arbitrary negative sign) then we're done
     if delta_pos < delta or delta_neg < delta:
         break      
-    print '%d iterations' % (iterations)
+    print '%d iterations' % (iterations), delta_pos, delta_neg
 
 # compute extracted signals by applying extracted weights on whitened signal data
 extracted_signals = np.vstack(components.transpose()).dot(whitened)
