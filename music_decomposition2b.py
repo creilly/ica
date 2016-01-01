@@ -135,6 +135,8 @@ whitened = E.dot(D).dot(E.transpose()).dot(centered)
 # will store extracted components here
 components = np.zeros((dimensions,dimensions))
 newComponent = np.zeros((dimensions,dimensions))
+finalComponent = np.zeros((dimensions,dimensions))
+prevComponent = np.zeros((dimensions,dimensions))
 
 # first derivative of nonlinear nongaussianity-maximizing function (gaussian)
 def F(x):
@@ -155,6 +157,7 @@ components = np.dot(np.dot(u * (1. / np.sqrt(s)), u.T), components)
 # components = components/ np.linalg.norm(components)
 
 iterations = 0
+itTwo = 0
 
 while True:
     
@@ -180,8 +183,23 @@ while True:
         newComponent[dimension,:] = new_guess
 
     # Symetric Decorrelation
-    s, u = np.linalg.eigh(np.dot(newComponent, newComponent.T))
-    newComponent = np.dot(np.dot(u * (1. / np.sqrt(s)), u.T), newComponent)
+    # Cannot use Frobenius Norm, using 2-norm.
+    newComponent = newComponent/np.sqrt(np.linalg.norm(np.dot(newComponent,newComponent.T),2))
+    prevComponent = newComponent
+    while True:
+        itTwo += 1
+        finalComponent =  np.zeros((dimensions,dimensions))
+
+        finalComponent = 3/2*prevComponent - 1/2 * np.dot(np.dot(prevComponent,prevComponent.T),prevComponent)
+        
+        lim = max(np.abs(np.abs(np.diag(finalComponent.dot(prevComponent.T)))-1))
+        prevComponent = finalComponent
+
+        print finalComponent, lim
+        #finalComponent is not converging
+        if lim < delta or itTwo == 5:
+            quit()
+
 
     # compute difference between new and old guess
     # delta_pos = np.linalg.norm(np.abs(newComponent) - np.abs(components))
