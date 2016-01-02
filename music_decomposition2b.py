@@ -6,7 +6,7 @@ import struct
 import os
 
 samples = 195000 # how many music samples per track to analyze (max 200000) current 195000
-delta = 1.e-4 # criterion for convergence 1e-4
+delta = 1.e-6 # criterion for convergence 1e-4
 bins = 500 # number of bins in histgrams
 sound_program = 'start' # program that plays wav files (change this for your os)
 
@@ -137,6 +137,7 @@ components = np.zeros((dimensions,dimensions))
 newComponent = np.zeros((dimensions,dimensions))
 finalComponent = np.zeros((dimensions,dimensions))
 prevComponent = np.zeros((dimensions,dimensions))
+lim = 0
 
 # first derivative of nonlinear nongaussianity-maximizing function (gaussian)
 def F(x):
@@ -187,18 +188,23 @@ while True:
     newComponent = newComponent/np.sqrt(np.linalg.norm(np.dot(newComponent,newComponent.T),2))
     prevComponent = newComponent
     while True:
+        itTwo = 0
         itTwo += 1
         finalComponent =  np.zeros((dimensions,dimensions))
 
-        finalComponent = 3/2*prevComponent - 1/2 * np.dot(np.dot(prevComponent,prevComponent.T),prevComponent)
-        
-        lim = max(np.abs(np.abs(np.diag(finalComponent.dot(prevComponent.T)))-1))
-        prevComponent = finalComponent
+        finalComponent = prevComponent * 3/2 -  np.dot(
+            np.dot(prevComponent,prevComponent.T),prevComponent
+            ) * 1/2
+        #print "\nprev \n", prevComponent, "\nfinal \n", finalComponent,  "\nlim \n", lim
 
-        print finalComponent, lim
+        lim = max(np.abs(np.abs(np.diag(finalComponent.dot(prevComponent.T)))-1))
+        
+        
+        #print "Converge", lim, itTwo
+        prevComponent = finalComponent
         #finalComponent is not converging
-        if lim < delta or itTwo == 5:
-            quit()
+        if lim < delta:
+            break
 
 
     # compute difference between new and old guess
@@ -208,16 +214,16 @@ while True:
     # delta_neg = np.linalg.norm(np.abs(newComponent) + np.abs(components))
 
     #print "OldS \n", components, "\n NewS \n", newComponent
-    lim = max(np.abs(np.abs(np.diag(newComponent.dot(components.T)))-1))
+    #lim = max(np.abs(np.abs(np.diag(finalComponent.dot(components.T)))-1))
 
     # set new guess to be old guess of next loop
-    components = newComponent
+    #components = newComponent
 
 
     # if old guess is "same" as new guess (i.e. within arbitrary negative sign) then we're done
     if lim < delta:
         break      
-    print '%d iterations' % (iterations), lim
+    #print '%d iterations' % (iterations), lim
 
 # compute extracted signals by applying extracted weights on whitened signal data
 extracted_signals = np.vstack(components.transpose()).dot(whitened)
