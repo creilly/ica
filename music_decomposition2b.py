@@ -65,6 +65,7 @@ if HIST:
         plt.title('source hist')
         plt.show()
 
+quit()
 # stack source data into rectangular (2d) numpy array
 sources = np.array(sources)
 
