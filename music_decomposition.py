@@ -27,10 +27,10 @@ if '--play' in sys.argv:
 
 # these files should be in the local folder
 wave_files = [
-    'africa.wav',
-    'dont-speak.wav',
-    'mambo-no-5.wav',
-    'i-ran-so-far-away.wav'
+    'songs/africa.wav',
+    'songs/dont-speak.wav',
+    'songs/mambo-no-5.wav',
+    'songs/i-ran-so-far-away.wav'
 ]
 
 # this list will hold the numeric waveform data
