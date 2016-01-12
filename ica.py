@@ -12,9 +12,19 @@ def log_gaussian(x):
 
     return 1./ a * np.log(np.cosh(a * x))
 
+# converges each signal individually
+def iterative():
+    pass
+# converges signals together
+def symmetric():
+    pass
+# uses approximate for eigenvalue decomposition
+def symmetric_approx():
+    pass
+
 # takes rectangular numpy array of with each row representing a signal.
 # extracts original sources using independent component analysis
-def extract_sources(signals,non_linear_function=negative_gaussian):
+def extract_sources(signals,non_linear_function=negative_gaussian, method = iterative):
     dimensions, samples = signals.shape
 
     # make each signal have zero mean
