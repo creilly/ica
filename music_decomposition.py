@@ -4,11 +4,11 @@ import sys
 import wave
 import struct
 import os
+from ica import extract_sources
 
 samples = 195000 # how many music samples per track to analyze (max 200000)
-delta = 1.e-4 # criterion for convergence
 bins = 500 # number of bins in histgrams
-sound_program = 'start' # program that plays wav files (change this for your os)
+sound_program = 'aplay' # program that plays wav files (change this for your os)
 
 # command line argument to show histograms of the source, signal, and extracted data (shows 3*dimensions number of plots)
 HIST = False
@@ -115,94 +115,8 @@ if HIST:
         plt.title('mixed signal hist')
         plt.show()
 
-# make each signal have zero mean
-centered = signals - np.average(signals,1).reshape(dimensions,1)
 
-# compute expectation value of covariance matrix
-cov = np.cov(centered)
-
-# compute eigenvalue / eigenvector decomposition
-eigenvalues, eigenvectors = np.linalg.eig(cov)
-
-E = eigenvectors
-
-# construct diagonal matrix of inverse square root of eigenvalues
-D = np.diag(1. / np.sqrt(eigenvalues))
-
-# apply linear transformation on centered signal data to have unit covariance
-whitened = E.dot(D).dot(E.transpose()).dot(centered)
-
-# will store extracted components here
-components = []
-
-# first derivative of nonlinear nongaussianity-maximizing function (gaussian)
-def F(x):
-    return x * np.exp(-1. * np.square(x) / 2.)
-
-# second derivative
-def f(x):
-    return (1. - np.square(x)) * np.exp(-1. * np.square(x) / 2.)
-
-# there are as many components as there are dimensions
-for dimension in range(dimensions):
-    # make an initial guess
-    old_guess = np.random.uniform(-1.,1.,dimensions)
-    print components
-    # project out any component along previously extracted components
-    old_guess = old_guess - sum( 
-        [
-            component.transpose().dot(old_guess) * component for component in components
-        ],
-        np.zeros(dimensions)
-    )
-    
-    # normalize
-    old_guess = old_guess / np.linalg.norm(old_guess)
-    
-    # keep track of number of iterations it takes to converge
-    iterations = 0
-    while True:
-        iterations += 1
-
-        # compute improved component from old one
-        new_guess = np.average(
-            whitened * F(
-                old_guess.transpose().dot(whitened)
-            ).reshape(1,samples),
-            1
-        ) - np.average(
-            f(
-                old_guess.transpose().dot(whitened)
-            )            
-        ) * old_guess
-
-        # perform same projection / normalization as we did with first guess
-        new_guess = new_guess - sum( 
-            [
-                component.transpose().dot(new_guess) * component for component in components
-            ],
-            np.zeros(dimensions)
-        )
-        new_guess = new_guess / np.linalg.norm(new_guess)
-
-        # compute difference between new and old guess
-        delta_pos = np.linalg.norm(new_guess - old_guess)
-
-        # compute difference between new and negative of old guess
-        delta_neg = np.linalg.norm(new_guess + old_guess)
-
-        # set new guess to be old guess of next loop
-        old_guess = new_guess
-
-        # if old guess is "same" as new guess (i.e. within arbitrary negative sign) then we're done
-        if delta_pos < delta or delta_neg < delta:
-            break        
-    # add extracted component to list
-    components.append(old_guess)
-    print 'dimension %d found on %d iterations' % (dimension + 1,iterations)
-
-# compute extracted signals by applying extracted weights on whitened signal data
-extracted_signals = np.vstack(components).dot(whitened)
+extracted_signals = extract_sources(signals)
 
 if HIST:
     # plot extracted signal histograms
