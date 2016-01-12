@@ -6,6 +6,12 @@ delta = 1.e-4 # criterion for convergence
 def negative_gaussian(x):
     return -1. * np.exp(-1. / 2. * np.square(x))
 
+def log_gaussian(x):
+    #can optimize a for better algorithm
+    a = 1.5
+
+    return 1./ a * np.log(np.cosh(a * x))
+
 # takes rectangular numpy array of with each row representing a signal.
 # extracts original sources using independent component analysis
 def extract_sources(signals,non_linear_function=negative_gaussian):
