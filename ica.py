@@ -44,8 +44,7 @@ def extract_sources(signals,non_linear_function=negative_gaussian, method = iter
     # apply linear transformation on centered signal data to have unit covariance
     whitened = E.dot(D).dot(E.transpose()).dot(centered)
 
-    # will store extracted components here
-    components = []
+
     
     # first derivative of nonlinear nongaussianity-maximizing function
     def F(x):
@@ -55,63 +54,132 @@ def extract_sources(signals,non_linear_function=negative_gaussian, method = iter
     def f(x):
         return derivative(non_linear_function, x, 1.e-8, 2)
 
-    # there are as many components as there are dimensions
-    for dimension in range(dimensions):
-        # make an initial guess
-        old_guess = np.random.uniform(-1.,1.,dimensions)
+    # Iterative counts 1 parameter at a time
+    if method == 'iterative':
+        print 'method is iterative'
+        # will store extracted components here
+        components = []
+        
+        # there are as many components as there are dimensions
+        for dimension in range(dimensions):
+            # make an initial guess
+            old_guess = np.random.uniform(-1.,1.,dimensions)
 
-        # project out any component along previously extracted components
-        old_guess = old_guess - sum( 
-            [
-                component.transpose().dot(old_guess) * component for component in components
-            ],
-            np.zeros(dimensions)
-        )
-
-        # normalize
-        old_guess = old_guess / np.linalg.norm(old_guess)
-
-        # keep track of number of iterations it takes to converge
-        iterations = 0
-        while True:
-            iterations += 1
-
-            # compute improved component from old one
-            new_guess = np.average(
-                whitened * F(
-                    old_guess.transpose().dot(whitened)
-                ).reshape(1,samples),
-                1
-            ) - np.average(
-                f(
-                    old_guess.transpose().dot(whitened)
-                )            
-            ) * old_guess
-
-            # perform same projection / normalization as we did with first guess
-            new_guess = new_guess - sum( 
+            # project out any component along previously extracted components
+            old_guess = old_guess - sum( 
                 [
-                    component.transpose().dot(new_guess) * component for component in components
+                    component.transpose().dot(old_guess) * component for component in components
                 ],
                 np.zeros(dimensions)
             )
-            new_guess = new_guess / np.linalg.norm(new_guess)
 
-            # compute difference between new and old guess
-            delta_pos = np.linalg.norm(new_guess - old_guess)
+            # normalize
+            old_guess = old_guess / np.linalg.norm(old_guess)
 
-            # compute difference between new and negative of old guess
-            delta_neg = np.linalg.norm(new_guess + old_guess)
+            # keep track of number of iterations it takes to converge
+            iterations = 0
+            while True:
+                iterations += 1
+
+                # compute improved component from old one
+                new_guess = np.average(
+                    whitened * F(
+                        old_guess.transpose().dot(whitened)
+                    ).reshape(1,samples),
+                    1
+                ) - np.average(
+                    f(
+                        old_guess.transpose().dot(whitened)
+                    )            
+                ) * old_guess
+
+                # perform same projection / normalization as we did with first guess
+                new_guess = new_guess - sum( 
+                    [
+                        component.transpose().dot(new_guess) * component for component in components
+                    ],
+                    np.zeros(dimensions)
+                )
+                new_guess = new_guess / np.linalg.norm(new_guess)
+
+                # compute difference between new and old guess
+                delta_pos = np.linalg.norm(new_guess - old_guess)
+
+                # compute difference between new and negative of old guess
+                delta_neg = np.linalg.norm(new_guess + old_guess)
+
+                # set new guess to be old guess of next loop
+                old_guess = new_guess
+
+                # if old guess is "same" as new guess (i.e. within arbitrary negative sign) then we're done
+                if delta_pos < delta or delta_neg < delta:
+                    break        
+            # add extracted component to list
+            components.append(old_guess)
+            print 'dimension %d found on %d iterations' % (dimension + 1,iterations)
+
+    # Symmetric calculates all parameters together using lin alg
+    if method == 'symmetric':
+        print 'method is symmetric'
+
+        # will store extracted components here
+        components = np.zeros((dimensions,dimensions))
+        newComponent = np.zeros((dimensions,dimensions))
+    
+
+        for dimension in range(dimensions):
+            old_guess = np.random.uniform(-1.,1.,dimensions)
+            components[dimension,:] = old_guess
+
+        s, u = np.linalg.eigh(np.dot(components, components.T))
+        components = np.dot(np.dot(u * (1. / np.sqrt(s)), u.T), components)
+
+        # components = components/ np.linalg.norm(components)
+
+        iterations = 0
+
+        while True:
+            
+            iterations+=1
+            newComponent = np.zeros((dimensions,dimensions))
+            
+            for dimension in range(dimensions):
+                old_guess = components[dimension,:]
+                
+                new_guess = np.average(
+                    whitened * F(
+                        old_guess.transpose().dot(whitened)
+                    ).reshape(1,samples),
+                    1
+                ) - np.average(
+                    f(
+                        old_guess.transpose().dot(whitened)
+                    )            
+                ) * old_guess
+
+                #new_guess = new_guess / np.linalg.norm(new_guess)
+
+                newComponent[dimension,:] = new_guess
+
+            # Symetric Decorrelation
+            s, u = np.linalg.eigh(np.dot(newComponent, newComponent.T))
+            newComponent = np.dot(np.dot(u * (1. / np.sqrt(s)), u.T), newComponent)
+
+            #print "OldS \n", components, "\n NewS \n", newComponent
+            lim = max(np.abs(np.abs(np.diag(newComponent.dot(components.T)))-1))
 
             # set new guess to be old guess of next loop
-            old_guess = new_guess
+            components = newComponent
+
 
             # if old guess is "same" as new guess (i.e. within arbitrary negative sign) then we're done
-            if delta_pos < delta or delta_neg < delta:
-                break        
-        # add extracted component to list
-        components.append(old_guess)
-        print 'dimension %d found on %d iterations' % (dimension + 1,iterations)
+            if lim < delta:
+                break      
+            print '%d iterations' % (iterations), lim
+
+    # Symmetric_approx calculates simmilar to Symmetric but uses approx instead of lin alg
+    if method == symmetric_approx:
+        pass
 
     # compute extracted signals by applying extracted weights on whitened signal data
     extracted_signals = np.vstack(components).dot(whitened)
