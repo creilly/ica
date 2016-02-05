@@ -4,11 +4,15 @@ import sys
 import wave
 import struct
 import os
+from scipy.misc import derivative
 
 samples = 195000 # how many music samples per track to analyze (max 200000) current 195000
 delta = 1.e-4 # criterion for convergence 1e-4
 bins = 500 # number of bins in histgrams
 sound_program = 'start' # program that plays wav files (change this for your os)
+
+def non_linear_function(x):
+    return -1. * np.exp(-1. / 2. * np.square(x))
 
 # command line argument to show histograms of the source, signal, and extracted data (shows 3*dimensions number of plots)
 HIST = False
@@ -27,10 +31,10 @@ if '--play' in sys.argv:
 
 # these files should be in the local folder
 wave_files = [
-    'africa.wav',
-    'dont-speak.wav',
-    'mambo-no-5.wav',
-    'i-ran-so-far-away.wav'
+    'songs/africa.wav',
+    'songs/dont-speak.wav',
+    'songs/mambo-no-5.wav',
+    'songs/i-ran-so-far-away.wav'
 ]
 
 # this list will hold the numeric waveform data
@@ -136,14 +140,20 @@ whitened = E.dot(D).dot(E.transpose()).dot(centered)
 components = np.zeros((dimensions,dimensions))
 newComponent = np.zeros((dimensions,dimensions))
 
-# first derivative of nonlinear nongaussianity-maximizing function (gaussian)
+# # first derivative of nonlinear nongaussianity-maximizing function (gaussian)
+# def F(x):
+#     return x * np.exp(-1. * np.square(x) / 2.)
+
+# # second derivative
+# def f(x):
+#     return (1. - np.square(x)) * np.exp(-1. * np.square(x) / 2.)
+
 def F(x):
-    return x * np.exp(-1. * np.square(x) / 2.)
+    return derivative(non_linear_function, x, 1.e-8, 1)
 
 # second derivative
 def f(x):
-    return (1. - np.square(x)) * np.exp(-1. * np.square(x) / 2.)
-
+    return derivative(non_linear_function, x, 1.e-8, 2)
 
 for dimension in range(dimensions):
    old_guess = np.random.uniform(-1.,1.,dimensions)

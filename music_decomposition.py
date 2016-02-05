@@ -116,7 +116,7 @@ if HIST:
         plt.show()
 
 
-extracted_signals = extract_sources(signals)
+extracted_signals = extract_sources(signals, method = 'symmetric')
 
 if HIST:
     # plot extracted signal histograms

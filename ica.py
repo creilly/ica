@@ -24,7 +24,7 @@ def symmetric_approx():
 
 # takes rectangular numpy array of with each row representing a signal.
 # extracts original sources using independent component analysis
-def extract_sources(signals,non_linear_function=negative_gaussian, method = iterative):
+def extract_sources(signals,non_linear_function=negative_gaussian, method = 'iterative'):
     dimensions, samples = signals.shape
 
     # make each signal have zero mean
