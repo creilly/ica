@@ -6,7 +6,7 @@ import struct
 import os
 
 samples = 195000 # how many music samples per track to analyze (max 200000) current 195000
-delta = 1.e-6 # criterion for convergence 1e-4
+delta = 1.e-4 # criterion for convergence 1e-4
 bins = 500 # number of bins in histgrams
 sound_program = 'start' # program that plays wav files (change this for your os)
 
@@ -27,10 +27,10 @@ if '--play' in sys.argv:
 
 # these files should be in the local folder
 wave_files = [
-    'africa.wav',
-    'dont-speak.wav',
-    'mambo-no-5.wav',
-    'i-ran-so-far-away.wav'
+    'songs/africa.wav',
+    'songs/dont-speak.wav',
+    'songs/mambo-no-5.wav',
+    'songs/i-ran-so-far-away.wav'
 ]
 
 # this list will hold the numeric waveform data
@@ -65,7 +65,6 @@ if HIST:
         plt.title('source hist')
         plt.show()
 
-quit()
 # stack source data into rectangular (2d) numpy array
 sources = np.array(sources)
 
@@ -227,7 +226,7 @@ while True:
     #print '%d iterations' % (iterations), lim
 
 # compute extracted signals by applying extracted weights on whitened signal data
-extracted_signals = np.vstack(components.transpose()).dot(whitened)
+extracted_signals = np.vstack(components).dot(whitened)
 
 if HIST:
     # plot extracted signal histograms

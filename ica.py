@@ -157,10 +157,11 @@ def extract_sources(signals,non_linear_function=negative_gaussian, method = 'ite
                     )            
                 ) * old_guess
 
-                #new_guess = new_guess / np.linalg.norm(new_guess)
 
+                
                 newComponent[dimension,:] = new_guess
 
+            print newComponent
             # Symetric Decorrelation
             s, u = np.linalg.eigh(np.dot(newComponent, newComponent.T))
             newComponent = np.dot(np.dot(u * (1. / np.sqrt(s)), u.T), newComponent)

@@ -209,10 +209,10 @@ while True:
     # if old guess is "same" as new guess (i.e. within arbitrary negative sign) then we're done
     if lim < delta:
         break      
-    print '%d iterations' % (iterations), lim
+    print '%d iterations' % (iterations), lim, delta
 
 # compute extracted signals by applying extracted weights on whitened signal data
-extracted_signals = np.vstack(components.transpose()).dot(whitened)
+extracted_signals = np.vstack(components).dot(whitened)
 
 if HIST:
     # plot extracted signal histograms
